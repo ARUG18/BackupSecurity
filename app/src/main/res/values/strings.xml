@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Backup &amp; Security</string>
+    <string name="startserver">START SERVER</string>
+    <string name="stopserver">STOP SERVER</string>
+    <string name="server_status">Server Status:</string>
+    <string name="stopped">Stopped</string>
+    <string name="running">Running</string>
+</resources>
