@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -30,9 +32,11 @@ import java.nio.ByteOrder;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button b1;
+    private Button b1, b2;
     private TextView tv2, tv3;
     private boolean serverRunning = false;
+    private static final String TAG = "MainActivity";
+    ShellHelper sh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
         tv2 = findViewById(R.id.tv2);
         tv3 = findViewById(R.id.tv3);
         b1 = findViewById(R.id.b1);
+        b2 = findViewById(R.id.b2);
+        sh = new ShellHelper(false);
         b1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -49,6 +55,12 @@ public class MainActivity extends AppCompatActivity {
                     stop_ftp();
                 else
                     start_ftp();
+            }
+        });
+        b2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                debug_shell();
             }
         });
     }
@@ -71,9 +83,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //  Ask for permission
         else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    0);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
         }
     }
 
@@ -115,7 +125,12 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean checkWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo currentNetwork = connectivityManager.getActiveNetworkInfo();
+        NetworkInfo currentNetwork = null;
+        //  Guard NullPointerException
+        if (connectivityManager != null) {
+            currentNetwork = connectivityManager.getActiveNetworkInfo();
+        }
+
         //  Return true if connected on WiFi
         if (currentNetwork != null && currentNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
             return true;
@@ -134,7 +149,11 @@ public class MainActivity extends AppCompatActivity {
 
     private String getWifiAddress() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        int ipAddress = -1;
+        //  Guard NullPointerException
+        if (wifiManager != null) {
+            ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        }
 
         //  Convert to big-endian if needed
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
@@ -153,4 +172,35 @@ public class MainActivity extends AppCompatActivity {
         //  Return Wifi IP address string
         return ipAddressString;
     }
+
+    private void debug_shell() {
+        long start = System.currentTimeMillis();
+        //calling with empty string so that starts with /sdcard/
+        check_dir_recursively("");
+        long end = System.currentTimeMillis();
+        Log.d(TAG, "Checking files took " + ((end - start) / 1000) + " seconds");
+    }
+
+    //this function will call recursively until it checks all files and folders
+    synchronized void check_dir_recursively(String dir) {
+        Log.d(TAG, "#### cdr called with /sdcard/" + dir + " ####");
+        String st = sh.executor("ls -l \"/sdcard/" + dir + "\"");
+        String[] sta = st.split("\n");
+        for (String s : sta) {
+            //first character d in any line means it's a directory
+            if (s.startsWith("d")) {
+                Log.d(TAG, "directory = /sdcard/" + dir + s.substring(s.indexOf(':') + 4, s.length()) + "/");
+                check_dir_recursively(dir + s.substring(s.indexOf(':') + 4, s.length()) + "/");
+            }
+            //first character - in any line means it's a directory
+            else if (s.startsWith("-")) {
+                String filepath = "/sdcard/" + dir + s.substring(s.indexOf(':') + 4, s.length());
+                /*disable md5 for now, takes too much time to iterate
+                 *String md5 = sh.executor("md5sum \""+filepath+"\"").split(" ")[0];*/
+                String date_time = s.substring(s.indexOf(":") - 13, s.indexOf(":") + 3);
+                Log.d(TAG, "file      = " + filepath + " time = " + date_time);
+            }
+        }
+    }
+
 }
