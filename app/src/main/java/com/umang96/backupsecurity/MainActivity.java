@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,10 +23,10 @@ import com.umang96.backupsecurity.ftputil.ServerToStart;
 import com.umang96.backupsecurity.ftputil.StorageType;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
+import java.net.UnknownHostException;
+import java.nio.ByteOrder;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         tv2 = findViewById(R.id.tv2);
         tv3 = findViewById(R.id.tv3);
         b1 = findViewById(R.id.b1);
@@ -53,16 +54,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void start_ftp() {
-        //  Try to start ftp server if storage permission is granted
-        if (check_permission() && checkWifi()) {
+        //  Try to start ftp server if storage permission is granted and device is on WiFi
+        if (checkStoragePermission() && checkWifi()) {
             PrefsBean prefsBean = getPrefs();
             Intent intent = new Intent(MainActivity.this, FtpServerService.class);
             intent.putExtra("prefs.bean", prefsBean);
             Log.d("fixstart", "about to start service");
             startService(intent);
+
             b1.setText(R.string.stopserver);
             tv2.setText(R.string.running);
-            showAddress();
+            String ftpUrl = getWifiAddress() + ":12345/";
+            tv3.setText(ftpUrl);
+            tv3.setVisibility(View.VISIBLE);
             serverRunning = true;
         }
         //  Ask for permission
@@ -73,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean check_permission() {
+    private boolean checkStoragePermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
@@ -109,45 +113,44 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    protected void showAddress() {
-        try {
-            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
-            boolean found = false;
-            while (ifaces.hasMoreElements() && !found) {
-                NetworkInterface iface = ifaces.nextElement();
-                Enumeration<InetAddress> inetAddrs = iface.getInetAddresses();
-
-                while (inetAddrs.hasMoreElements() && !found) {
-                    InetAddress inetAddr = inetAddrs.nextElement();
-                    String hostAddr = inetAddr.getHostAddress();
-
-                    if ((!(inetAddr.isLoopbackAddress() || hostAddr.contains(":"))) && (hostAddr.contains("192"))) {
-                        Log.d("MainActivity", hostAddr);
-                        String res = "ftp://" + hostAddr + ":12345/";
-                        tv3.setText(res);
-                        tv3.setVisibility(View.VISIBLE);
-                        found = true;
-                    }
-                }
-            }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-    }
-
     private boolean checkWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo currentNetwork = connectivityManager.getActiveNetworkInfo();
-        //  Either no connection, or no Wi-Fi
-        if (currentNetwork == null) {
-            Toast.makeText(MainActivity.this, "Device has no active connection", Toast.LENGTH_SHORT).show();
-            return false;
-        } else if (currentNetwork.getType() != ConnectivityManager.TYPE_WIFI){
-            Toast.makeText(MainActivity.this, "Device isn't connected to Wi-Fi", Toast.LENGTH_SHORT).show();
-            return false;
+        //  Return true if connected on WiFi
+        if (currentNetwork != null && currentNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
+            return true;
         }
 
-        //  Connected to WiFi, return true
-        return true;
+        //  Else create a toast message and return false
+        String message;
+        if (currentNetwork == null) {
+            message = "Device has no active connection";
+        } else {
+            message = "Device is not connected via WiFi";
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    private String getWifiAddress() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+
+        //  Convert to big-endian if needed
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            ipAddress = Integer.reverseBytes(ipAddress);
+        }
+
+        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+        String ipAddressString = "";
+        try {
+            ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
+        } catch (UnknownHostException e) {
+            Log.e("IP CONVERSION", "showAddress: Unable to get host address");
+            e.printStackTrace();
+        }
+
+        //  Return Wifi IP address string
+        return ipAddressString;
     }
 }
