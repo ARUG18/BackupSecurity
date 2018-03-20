@@ -13,7 +13,7 @@ public class ShellHelper {
     private BufferedReader mReader;
     private BufferedWriter mWriter;
     private Process mProcess;
-    private final String logtag = "ShellHelper";
+    private static final String logtag = "ShellHelper";
 
     void FinishShell()
     {

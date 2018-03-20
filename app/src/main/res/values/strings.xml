@@ -5,4 +5,5 @@
     <string name="server_status">Server Status:</string>
     <string name="stopped">Stopped</string>
     <string name="running">Running</string>
+    <string name="ftpstatusstopped">FTP Unavailable (Server not Running)</string>
 </resources>

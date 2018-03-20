@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,8 +31,8 @@ import java.nio.ByteOrder;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button b1, b2;
-    private TextView tv2, tv3;
+    private Button startStopButton, debugShellButton;
+    private TextView tvServerStatus, tvFtpStatus;
     private boolean serverRunning = false;
     private static final String TAG = "MainActivity";
     ShellHelper sh;
@@ -43,12 +42,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        tv2 = findViewById(R.id.tv2);
-        tv3 = findViewById(R.id.tv3);
-        b1 = findViewById(R.id.b1);
-        b2 = findViewById(R.id.b2);
+        tvServerStatus = findViewById(R.id.tvServerStatus);
+        tvFtpStatus = findViewById(R.id.tvFtpStatus);
+        startStopButton = findViewById(R.id.startStopButton);
+        debugShellButton = findViewById(R.id.debugShellButton);
         sh = new ShellHelper(false);
-        b1.setOnClickListener(new View.OnClickListener() {
+        startStopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (serverRunning)
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
                     start_ftp();
             }
         });
-        b2.setOnClickListener(new View.OnClickListener() {
+        debugShellButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 debug_shell();
@@ -74,11 +73,10 @@ public class MainActivity extends AppCompatActivity {
             Log.d("fixstart", "about to start service");
             startService(intent);
 
-            b1.setText(R.string.stopserver);
-            tv2.setText(R.string.running);
-            String ftpUrl = getWifiAddress() + ":12345/";
-            tv3.setText(ftpUrl);
-            tv3.setVisibility(View.VISIBLE);
+            String ftpUrl = "Access  ftp://" + getWifiAddress() + ":12345/";
+            tvFtpStatus.setText(ftpUrl);
+            tvServerStatus.setText(R.string.running);
+            startStopButton.setText(R.string.stopserver);
             serverRunning = true;
         }
         //  Ask for permission
@@ -95,9 +93,9 @@ public class MainActivity extends AppCompatActivity {
         //  Try to stop ftp server
         Log.d("fixstart", "about to stop service");
         stopService(new Intent(MainActivity.this, FtpServerService.class));
-        b1.setText(R.string.startserver);
-        tv2.setText(R.string.stopped);
-        tv3.setVisibility(View.GONE);
+        tvFtpStatus.setText(R.string.ftpstatusstopped);
+        startStopButton.setText(R.string.startserver);
+        tvServerStatus.setText(R.string.stopped);
         serverRunning = false;
     }
 
