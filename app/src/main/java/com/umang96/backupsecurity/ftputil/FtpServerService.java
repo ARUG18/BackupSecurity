@@ -105,6 +105,8 @@ public class FtpServerService extends AbstractServerService
         conCfg.setAnonymousLoginEnabled(prefsBean.isAnonymousLogin());
         conCfg.setMaxLoginFailures(5);
         conCfg.setLoginFailureDelay(2000);
+        conCfg.setMaxLogins(99999999);
+        conCfg.setMaxAnonymousLogins(99999999);
         serverFactory.setConnectionConfig(conCfg.createConnectionConfig());
 
         // do start server

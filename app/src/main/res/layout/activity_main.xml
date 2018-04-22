@@ -78,7 +78,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
-        android:text="DEBUG SHELL"
+        android:text="PREPARE CONFIG"
         app:layout_constraintEnd_toEndOf="@+id/startStopButton"
         app:layout_constraintStart_toStartOf="@+id/startStopButton"
         app:layout_constraintTop_toBottomOf="@+id/startStopButton" />
