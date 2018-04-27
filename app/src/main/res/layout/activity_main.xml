@@ -1,93 +1,304 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#dddddd"
     tools:context="com.umang96.backupsecurity.MainActivity">
 
-    <TextView
-        android:id="@+id/tvServerStatusText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/server_status"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/tvServerStatus"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_toEndOf="@id/tvServerStatusText"
-        android:text="@string/stopped"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tvServerStatusText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/tvFtpStatus"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tvServerStatusText"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:text="@string/server_not_running"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvServerStatusText" />
+            <android.support.v7.widget.CardView
+                android:id="@+id/cv1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="5dp"
+                android:elevation="8dp">
 
-    <Button
-        android:id="@+id/startStopButton"
-        android:layout_width="140dp"
-        android:layout_height="48dp"
-        android:layout_below="@id/tvFtpStatus"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/startserver"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvFtpStatus" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp">
 
-    <Button
-        android:id="@+id/debugShellButton"
-        android:layout_width="140dp"
-        android:layout_height="48dp"
-        android:layout_below="@id/startStopButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:text="PREPARE CONFIG"
-        app:layout_constraintEnd_toEndOf="@+id/startStopButton"
-        app:layout_constraintStart_toStartOf="@+id/startStopButton"
-        app:layout_constraintTop_toBottomOf="@+id/startStopButton" />
+                    <TextView
+                        android:id="@+id/tv_backupStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:text="STATUS"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
+                    <TextView
+                        android:id="@+id/tv_lastBackup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_backupStatus"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="20dp"
+                        android:text="Last successful backup : never" />
 
-</android.support.constraint.ConstraintLayout>
+                    <TextView
+                        android:id="@+id/tv_nextBackup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_lastBackup"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="30dp"
+                        android:layout_marginBottom="10dp"
+                        android:text="Next backup schedule : after 12 hrs" />
+                </RelativeLayout>
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cv2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/cv1"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="5dp"
+                android:elevation="8dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/tv_backupSettings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:text="BACKUP SETTINGS"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <CheckBox
+                        android:id="@+id/cb_enableBackupService"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_backupSettings"
+                        android:layout_marginTop="20dp"
+                        android:text="Enable automatic backup service"
+                        android:textColor="#707070"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_fileScanInterval"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/cb_enableBackupService"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="30dp"
+                        android:text="File scan interval (minutes)" />
+
+                    <EditText
+                        android:id="@+id/et_fileScanInterval"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@id/tv_fileScanInterval"
+                        android:layout_marginStart="20dp"
+                        android:layout_toEndOf="@id/tv_fileScanInterval"
+                        android:inputType="number" />
+
+                    <Button
+                        android:id="@+id/btn_fileScanInterval"
+                        android:layout_width="60dp"
+                        android:layout_height="40dp"
+                        android:layout_alignBaseline="@id/tv_fileScanInterval"
+                        android:layout_marginStart="20dp"
+                        android:layout_alignParentEnd="true"
+                        android:text="SET"
+                        android:textColor="#505050"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_networkScanInterval"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_fileScanInterval"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="30dp"
+                        android:text="Wifi scan interval (minutes)" />
+
+                    <EditText
+                        android:id="@+id/et_networkScanInterval"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@id/tv_networkScanInterval"
+                        android:layout_marginStart="20dp"
+                        android:layout_toEndOf="@id/tv_networkScanInterval"
+                        android:inputType="number" />
+
+                    <Button
+                        android:id="@+id/btn_networkScanInterval"
+                        android:layout_width="60dp"
+                        android:layout_height="40dp"
+                        android:layout_alignBaseline="@id/tv_networkScanInterval"
+                        android:layout_alignParentEnd="true"
+                        android:text="SET"
+                        android:textColor="#505050"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_preferredNetwork"
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_networkScanInterval"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="30dp"
+                        android:text="Preferred wifi network -" />
+
+                    <Button
+                        android:id="@+id/btn_scan"
+                        android:layout_width="80dp"
+                        android:layout_height="40dp"
+                        android:text="SCAN"
+                        android:layout_marginStart="20dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignBaseline="@id/tv_preferredNetwork"
+                        android:textColor="#505050"
+                        android:textSize="14sp"/>
+
+                    <TextView
+                        android:id="@+id/tv_preferredNetworkValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_preferredNetwork"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="10dp"
+                        android:text="not set"/>
+                </RelativeLayout>
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cv3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/cv2"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:elevation="8dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/tv_securitySettings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:text="SECURITY SETTINGS"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <CheckBox
+                        android:id="@+id/cb_enableSecurityService"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_securitySettings"
+                        android:layout_marginTop="20dp"
+                        android:text="Enable security service"
+                        android:textColor="#707070"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_smsKeyword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/cb_enableSecurityService"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="30dp"
+                        android:text="Sms secret keyword -" />
+
+                    <EditText
+                        android:id="@+id/et_smsKeyword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_smsKeyword"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp" />
+
+                    <Button
+                        android:id="@+id/btn_smsKeyword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_below="@id/et_smsKeyword"
+                        android:layout_centerHorizontal="true"
+                        android:textColor="#707070"
+                        android:textSize="14sp"
+                        android:text="SET SMS KEYWORD"/>
+
+                </RelativeLayout>
+            </android.support.v7.widget.CardView>
+            <android.support.v7.widget.CardView
+                android:id="@+id/cv4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/cv3"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:visibility="gone"
+                android:elevation="8dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/tv_manualControls"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:text="MANUAL CONTROLS"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                    <Button
+                        android:id="@+id/btn_startFtp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_below="@id/tv_manualControls"
+                        android:layout_centerHorizontal="true"
+                        android:textColor="#707070"
+                        android:textSize="14sp"
+                        android:text="START FTP"/>
+                    <Button
+                        android:id="@+id/btn_prepareConfig"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_below="@id/tv_manualControls"
+                        android:layout_centerHorizontal="true"
+                        android:textColor="#707070"
+                        android:textSize="14sp"
+                        android:text="PREPARE CONFIG"/>
+
+                </RelativeLayout>
+            </android.support.v7.widget.CardView>
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>
