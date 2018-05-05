@@ -1,7 +1,9 @@
 package com.umang96.backupsecurity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -17,35 +19,30 @@ import com.umang96.backupsecurity.ftputil.PrefsBean;
 import com.umang96.backupsecurity.ftputil.ServerToStart;
 import com.umang96.backupsecurity.ftputil.StorageType;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.ByteOrder;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 public class BackgroundService extends JobIntentService {
 
+    final static String TAG = "BackgroundService";
+    final static String START_FTP = "start.bs.ftp.server";
+    final static String STOP_FTP = "stop.bs.ftp.server";
     static boolean serviceRunning = false;
     static boolean serverRunning = false;
     static boolean threadRunning = false;
     static boolean runThread = false;
-    String TAG = "BackgroundService";
+    static boolean screenOn = true;
+    static Thread t;
     String sdcard;
     ShellHelper sh;
     StringBuilder sb;
-    Thread t;
+    BroadcastReceiver mReceiver;
     private WifiManager mWifiManager;
 
     @Override
-    public IBinder onBind(Intent intent) {
+    public IBinder onBind(@NonNull Intent intent) {
         // TODO: Return the communication channel to the service.
         return null;
     }
@@ -58,10 +55,7 @@ public class BackgroundService extends JobIntentService {
         onTaskRemoved(intent);
         SharedPreferences sp = getSharedPreferences("prefs_main", MODE_PRIVATE);
         if (!threadRunning && sp.getBoolean("enableBackup", false)) {
-            if (t == null) {
-                prepare_thread();
-            }
-            t.start();
+            start_thread();
         }
         return START_STICKY;
     }
@@ -72,22 +66,33 @@ public class BackgroundService extends JobIntentService {
         Log.d(TAG, "service onCreate called");
         mWifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         serviceRunning = true;
-        runThread = true;
         sdcard = Environment.getExternalStorageDirectory().getAbsolutePath();
         sh = new ShellHelper(false);
         SharedPreferences sp = getSharedPreferences("prefs_main", MODE_PRIVATE);
         if (!threadRunning && sp.getBoolean("enableBackup", false)) {
-            if (t == null) {
-                prepare_thread();
-            }
-            t.start();
+            start_thread();
         }
+        prepareScreenListener();
+    }
+
+    private void prepareScreenListener() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(START_FTP);
+        filter.addAction(STOP_FTP);
+        mReceiver = new BroadcastListener();
+        registerReceiver(mReceiver, filter);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "service onDestroy called");
+        if (serverRunning) {
+            stop_ftp();
+        }
+        unregisterReceiver(mReceiver);
         serviceRunning = false;
         threadRunning = false;
         runThread = false;
@@ -98,26 +103,26 @@ public class BackgroundService extends JobIntentService {
 
     }
 
-    private void prepare_thread() {
-
+    private void start_thread() {
+        runThread = true;
         t = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (runThread) {
+                while (runThread && screenOn) {
                     threadRunning = true;
                     //Log.d(TAG,"thread is running");
                     prepare_list_if_needed();
                     if (checkWifi()) {
                         SharedPreferences sp = getSharedPreferences("prefs_main", MODE_PRIVATE);
                         String st = "\"" + sp.getString("preferredNetwork", "not set") + "\"";
-                        //Log.d(TAG,"checkWifi passed preferredNetwork = "+st+" ssid = "+mWifiManager.getConnectionInfo().getSSID());
+                        Log.d(TAG, "checkWifi passed preferredNetwork = " + st + " ssid = " + mWifiManager.getConnectionInfo().getSSID());
                         if (mWifiManager.getConnectionInfo().getSSID().equals(st)) {
                             if (!serverRunning) {
                                 Log.d(TAG, "wifi network matched, starting server");
                                 start_ftp();
-                                SharedPreferences.Editor et = getSharedPreferences("prefs_main",MODE_PRIVATE).edit();
+                                SharedPreferences.Editor et = getSharedPreferences("prefs_main", MODE_PRIVATE).edit();
                                 String str = Calendar.getInstance().getTime().toString();
-                                et.putString("timestamp","Last successful backup : "+str);
+                                et.putString("timestamp", "Last successful backup : " + str);
                                 et.apply();
                             }
                         } else {
@@ -133,13 +138,15 @@ public class BackgroundService extends JobIntentService {
                         }
                     }
                     try {
-                        t.sleep(10000);
+                        Log.d(TAG, "backgroundThread is running id = " + Thread.currentThread().getId());
+                        Thread.sleep(20000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
         });
+        t.start();
     }
 
 
@@ -149,7 +156,7 @@ public class BackgroundService extends JobIntentService {
         long last = sp.getLong("filesLastTime", System.currentTimeMillis());
         long interval = sp.getInt("fileScanInterval", 60) * 60 * 1000;
         long current = System.currentTimeMillis();
-        Log.d(TAG, "last = " + last + "current = " + current);
+        Log.d(TAG, "last = " + last + " current = " + current);
         if (file.exists() && (current < last + interval)) {
             Log.d(TAG, "File exists, no need to generate");
             return;
@@ -172,7 +179,10 @@ public class BackgroundService extends JobIntentService {
         try {
             File root = new File(sdcard, "/BackupSecurity/");
             if (!root.exists()) {
-                root.mkdirs();
+                boolean suc = root.mkdirs();
+                if (!suc) {
+                    Log.e(TAG, "Failed to make directories !");
+                }
             }
             File file = new File(root, fileName);
             FileWriter writer = new FileWriter(file);
@@ -213,32 +223,6 @@ public class BackgroundService extends JobIntentService {
         }
     }
 
-    private String getWifiAddress() {
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        int ipAddress = -1;
-        //  Guard NullPointerException
-        if (wifiManager != null) {
-            ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-        }
-
-        //  Convert to big-endian if needed
-        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-            ipAddress = Integer.reverseBytes(ipAddress);
-        }
-
-        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
-        String ipAddressString = "";
-        try {
-            ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
-        } catch (UnknownHostException e) {
-            Log.e(TAG, "showAddress: Unable to get host address");
-            e.printStackTrace();
-        }
-
-        //  Return Wifi IP address string
-        return ipAddressString;
-    }
-
     private boolean checkWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo currentNetwork = null;
@@ -248,19 +232,7 @@ public class BackgroundService extends JobIntentService {
         }
 
         //  Return true if connected on WiFi
-        if (currentNetwork != null && currentNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
-            return true;
-        }
-
-        //  Else create a toast message and return false
-        String message;
-        if (currentNetwork == null) {
-            message = "Device has no active connection";
-        } else {
-            message = "Device is not connected via WiFi";
-        }
-        //Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        return false;
+        return currentNetwork != null && currentNetwork.getType() == ConnectivityManager.TYPE_WIFI;
     }
 
     void stop_ftp() {
@@ -301,7 +273,6 @@ public class BackgroundService extends JobIntentService {
             intent.putExtra("prefs.bean", prefsBean);
             Log.d(TAG, "about to start ftp service");
             startService(intent);
-            String ftpUrl = "Access  ftp://" + getWifiAddress() + ":12345/";
             serverRunning = true;
         }
         //  Ask for permission
@@ -310,7 +281,7 @@ public class BackgroundService extends JobIntentService {
         }
     }
 
-    //will use this dunction later to get data from pc, need to find pc's ip first
+    /*will use this dunction later to get data from pc, need to find pc's ip first
     private void try_download() {
         Log.d(TAG, "try download called");
         Thread th = new Thread(new Runnable() {
@@ -339,6 +310,36 @@ public class BackgroundService extends JobIntentService {
 
         });
         th.start();
+    }*/
+
+    class BroadcastListener extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent == null || intent.getAction() == null) {
+                return;
+            }
+
+            switch (intent.getAction()) {
+                case Intent.ACTION_SCREEN_ON:
+                    Log.d(TAG, "got screen on intent");
+                    screenOn = true;
+                    SharedPreferences sp = getSharedPreferences("prefs_main", MODE_PRIVATE);
+                    if (sp.getBoolean("enableBackup", false)) {
+                        start_thread();
+                    }
+                    break;
+                case Intent.ACTION_SCREEN_OFF:
+                    Log.d(TAG, "got screen off intent");
+                    screenOn = false;
+                    break;
+                case START_FTP:
+                    start_ftp();
+                    break;
+                case STOP_FTP:
+                    stop_ftp();
+                    break;
+            }
+        }
     }
 
 }

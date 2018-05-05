@@ -118,7 +118,7 @@ public class ServerServiceHandler extends Handler
         if (wakeLock == null && takeWakeLock) {
             logger.debug("acquiring wake lock ({})", logName);
             wakeLock = powerMgr.newWakeLock(
-                    PowerManager.SCREEN_DIM_WAKE_LOCK,
+                    PowerManager.PARTIAL_WAKE_LOCK,
                     APP_NAME);
             wakeLock.acquire();
         } else {
