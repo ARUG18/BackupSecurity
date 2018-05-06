@@ -198,6 +198,9 @@ public class BackgroundService extends JobIntentService {
     //this function will call recursively until it checks all files and folders
     synchronized void check_dir_recursively(String dir) {
         Log.d(TAG, "#### cdr called with /sdcard/" + dir + " ####");
+        if(isException(dir)) {
+            return;
+        }
         String cmd = "ls -l \"" + sdcard + dir + "\"";
         Log.d(TAG, cmd);
         String st = sh.executor(cmd);
@@ -221,6 +224,10 @@ public class BackgroundService extends JobIntentService {
                 sb.append(fst);
             }
         }
+    }
+
+    private boolean isException(String dir) {
+        return dir.contains("Android/data") || dir.contains("Android/obb");
     }
 
     private boolean checkWifi() {

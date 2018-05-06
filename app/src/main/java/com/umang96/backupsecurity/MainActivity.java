@@ -328,7 +328,12 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            loadValues();
+                            String ftps = "Status     :     " + (BackgroundService.serverRunning ? "running" : "stopped");
+                            ftpStatus.setText(ftps);
+                            ftpServer.setText(BackgroundService.serverRunning ? "Stop" : "Start");
+                            String ftpu = "Ftp url     :     " + "ftp://" + getWifiAddress() + ":12345/";
+                            ftpUrl.setText(ftpu);
+                            ftpUrl.setVisibility(BackgroundService.serverRunning ? View.VISIBLE : View.GONE);
                         }
                     });
                     try {
